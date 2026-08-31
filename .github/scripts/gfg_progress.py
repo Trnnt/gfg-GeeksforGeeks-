@@ -1,459 +1,3 @@
-from pathlib import Path
-import math
-
-ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / "assets"
-
-SOURCE_EXTENSIONS = {
-    ".cpp", ".cc", ".c", ".h", ".hpp",
-    ".java", ".py", ".js", ".ts",
-    ".go", ".rs", ".kt", ".kts",
-    ".php", ".swift"
-}
-
-
-def difficulty(name):
-    name = name.lower()
-
-    if any(x in name for x in ["hard", "advanced", "expert"]):
-        return "hard"
-
-    if any(x in name for x in ["medium", "intermediate", "moderate"]):
-        return "medium"
-
-    return "easy"
-
-
-def has_solution(problem_folder):
-    return any(
-        file.is_file()
-        and file.suffix.lower() in SOURCE_EXTENSIONS
-        for file in problem_folder.iterdir()
-    )
-
-
-def scan_problems():
-
-    stats = {
-        "easy": 0,
-        "medium": 0,
-        "hard": 0
-    }
-
-    for difficulty_folder in ROOT.iterdir():
-
-        if not difficulty_folder.is_dir():
-            continue
-
-        if not difficulty_folder.name.lower().startswith("difficulty:"):
-            continue
-
-        level = difficulty(difficulty_folder.name)
-
-        for problem in difficulty_folder.iterdir():
-
-            if problem.is_dir() and has_solution(problem):
-                stats[level] += 1
-
-    stats["total"] = (
-        stats["easy"]
-        + stats["medium"]
-        + stats["hard"]
-    )
-
-    return stats
-
-
-def get_level(total):
-
-    levels = [
-        (0, "🌱 Beginner", 10),
-        (10, "⚔️ Problem Solver", 25),
-        (25, "🛡️ DSA Warrior", 50),
-        (50, "🔥 Code Fighter", 100),
-        (100, "👑 DSA Master", 200),
-        (200, "🏆 Algorithm Legend", None)
-    ]
-
-    current = levels[0]
-
-    for level in levels:
-
-        if total >= level[0]:
-            current = level
-        else:
-            break
-
-    return current
-
-
-def progress_bar(total, target, width=28):
-
-    if target is None:
-        return "█" * width
-
-    ratio = min(total / target, 1)
-
-    filled = round(ratio * width)
-
-    return (
-        "█" * filled
-        + "░" * (width - filled)
-    )
-
-
-def replace_section(
-    text,
-    start_marker,
-    end_marker,
-    replacement
-):
-
-    if start_marker not in text:
-        return text
-
-    if end_marker not in text:
-        return text
-
-    start = text.index(start_marker)
-
-    end = (
-        text.index(end_marker)
-        + len(end_marker)
-    )
-
-    return (
-        text[:start]
-        + replacement
-        + text[end:]
-    )
-
-
-def update_readme(stats):
-
-    readme = ROOT / "README.md"
-
-    text = readme.read_text(
-        encoding="utf-8"
-    )
-
-    total = stats["total"]
-
-    _, level, target = get_level(total)
-
-    xp = total * 10
-
-    if target is None:
-
-        target_display = total
-        next_level = "MAX LEVEL 🏆"
-
-    else:
-
-        target_display = target
-
-        next_level = (
-            f"{target - total} more problems"
-        )
-
-    bar = progress_bar(
-        total,
-        target
-    )
-
-    stats_block = "\n".join([
-        "<!-- GFG_STATS_START -->",
-        "| Difficulty | Solved |",
-        "| ---------- | -----: |",
-        f"| 🟢 Basic | {stats['easy']} |",
-        f"| 🟡 Intermediate | {stats['medium']} |",
-        f"| 🔴 Hard | {stats['hard']} |",
-        f"| **Total** | **{total}** |",
-        "<!-- GFG_STATS_END -->"
-    ])
-
-    text = replace_section(
-        text,
-        "<!-- GFG_STATS_START -->",
-        "<!-- GFG_STATS_END -->",
-        stats_block
-    )
-
-    journey_lines = [
-        "<!-- DSA_JOURNEY_START -->",
-        "",
-        "## 🧠 DSA Journey",
-        "",
-        f"### {level}",
-        "",
-        "```text",
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-        bar,
-        f"{total} / {target_display}",
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-        "",
-        "📚 Problems",
-        "",
-        f"   🟢 Basic          {stats['easy']}",
-        f"   🟡 Intermediate   {stats['medium']}",
-        f"   🔴 Hard           {stats['hard']}",
-        "",
-        "⚡ XP",
-        "",
-        f"   {xp} XP",
-        "",
-        "🎯 Next Level",
-        "",
-        f"   {next_level}",
-        "```",
-        "",
-        "<!-- DSA_JOURNEY_END -->"
-    ]
-
-    journey_block = "\n".join(
-        journey_lines
-    )
-
-    if (
-        "<!-- DSA_JOURNEY_START -->"
-        in text
-        and
-        "<!-- DSA_JOURNEY_END -->"
-        in text
-    ):
-
-        text = replace_section(
-            text,
-            "<!-- DSA_JOURNEY_START -->",
-            "<!-- DSA_JOURNEY_END -->",
-            journey_block
-        )
-
-    else:
-
-        marker = "## 🐍 GFG Solution Snake"
-
-        if marker in text:
-
-            text = text.replace(
-                marker,
-                journey_block
-                + "\n\n"
-                + marker,
-                1
-            )
-
-    readme.write_text(
-        text,
-        encoding="utf-8"
-    )
-
-
-def path_points(
-    count,
-    width=900,
-    height=220
-):
-
-    if count <= 0:
-        return []
-
-    cols = min(
-        12,
-        max(
-            5,
-            math.ceil(
-                math.sqrt(count)
-            )
-        )
-    )
-
-    rows = math.ceil(
-        count / cols
-    )
-
-    left = 70
-    right = width - 70
-
-    top = 105
-    bottom = height - 20
-
-    points = []
-
-    for row in range(rows):
-
-        if rows == 1:
-
-            y = top
-
-        else:
-
-            y = (
-                top
-                + (bottom - top)
-                * row
-                / (rows - 1)
-            )
-
-        xs = [
-            left
-            + (right - left)
-            * col
-            / max(cols - 1, 1)
-
-            for col in range(cols)
-        ]
-
-        if row % 2:
-
-            xs.reverse()
-
-        for x in xs:
-
-            if len(points) >= count:
-                break
-
-            points.append(
-                (x, y)
-            )
-
-    return points
-
-
-def write_svg(total):
-
-    ASSETS.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    width = 900
-    height = 280
-
-    points = path_points(
-        total
-    )
-
-    dots = "".join(
-        f'<circle cx="{x:.1f}" '
-        f'cy="{y:.1f}" '
-        f'r="7" '
-        f'fill="#22c55e"/>'
-
-        for x, y in points
-    )
-
-    body_points = points[
-        max(
-            0,
-            len(points) - 10
-        ):
-    ]
-
-    body = "".join(
-        f'<circle cx="{x:.1f}" '
-        f'cy="{y:.1f}" '
-        f'r="{max(5, 12 - i * 0.7):.1f}" '
-        f'fill="#14b8a6"/>'
-
-        for i, (x, y)
-        in enumerate(body_points)
-    )
-
-    if points:
-
-        head_x, head_y = points[-1]
-
-    else:
-
-        head_x = 70
-        head_y = 160
-
-    svg = f"""<svg
-xmlns="http://www.w3.org/2000/svg"
-width="{width}"
-height="{height}"
-viewBox="0 0 {width} {height}">
-
-<rect
-width="100%"
-height="100%"
-rx="18"
-fill="#0d1117"/>
-
-<text
-x="40"
-y="38"
-fill="#f0f6fc"
-font-family="Arial"
-font-size="22"
-font-weight="bold">
-
-🐍 GFG Solution Snake
-
-</text>
-
-<text
-x="40"
-y="64"
-fill="#8b949e"
-font-family="Arial"
-font-size="13">
-
-Each green node represents one GFG solution.
-
-</text>
-
-<rect
-x="30"
-y="80"
-width="840"
-height="165"
-rx="15"
-fill="#161b22"
-stroke="#30363d"/>
-
-{dots}
-
-{body}
-
-<circle
-cx="{head_x:.1f}"
-cy="{head_y:.1f}"
-r="14"
-fill="#2dd4bf"
-stroke="#d1fae5"
-stroke-width="2"/>
-
-<circle
-cx="{head_x + 4:.1f}"
-cy="{head_y - 4:.1f}"
-r="2"
-fill="#0d1117"/>
-
-<text
-x="40"
-y="268"
-fill="#8b949e"
-font-family="Arial"
-font-size="12">
-
-Solutions tracked: {total}
-
-</text>
-
-</svg>
-"""
-
-    (
-        ASSETS
-        / "gfg-solution-snake.svg"
-    ).write_text(
-        svg,
-        encoding="utf-8"
-    )
-
-
 def write_gif(total):
 
     from PIL import Image, ImageDraw
@@ -463,168 +7,385 @@ def write_gif(total):
         exist_ok=True
     )
 
-    width = 900
-    height = 280
+    WIDTH = 900
+    HEIGHT = 320
+
+    FOOD_COLOR = "#22c55e"
+    SNAKE_COLOR = "#14b8a6"
+    HEAD_COLOR = "#2dd4bf"
+    BG_COLOR = "#0d1117"
+    BOARD_COLOR = "#161b22"
+    BORDER_COLOR = "#30363d"
+    TEXT_COLOR = "#f0f6fc"
+    MUTED_COLOR = "#8b949e"
+
+    # --------------------------------------------------
+    # No solutions yet
+    # --------------------------------------------------
+
+    if total == 0:
+
+        image = Image.new(
+            "RGB",
+            (WIDTH, HEIGHT),
+            BG_COLOR
+        )
+
+        draw = ImageDraw.Draw(image)
+
+        draw.rounded_rectangle(
+            (30, 80, 870, 270),
+            radius=18,
+            fill=BOARD_COLOR,
+            outline=BORDER_COLOR,
+            width=2
+        )
+
+        draw.text(
+            (40, 25),
+            "🐍 GFG Solution Snake",
+            fill=TEXT_COLOR
+        )
+
+        draw.text(
+            (40, 55),
+            "Solve a GFG problem to spawn food.",
+            fill=MUTED_COLOR
+        )
+
+        draw.text(
+            (40, 285),
+            "Solutions tracked: 0",
+            fill=MUTED_COLOR
+        )
+
+        image.save(
+            ASSETS / "gfg-solution-snake.gif"
+        )
+
+        return
+
+    # --------------------------------------------------
+    # Generate food positions
+    # --------------------------------------------------
 
     points = path_points(
-        total
+        total,
+        width=760,
+        height=170
     )
+
+    # Move points slightly so the board looks cleaner
+    points = [
+        (x + 70, y + 85)
+        for x, y in points
+    ]
 
     frames = []
 
-    frame_count = max(
-        1,
-        len(points)
+    # --------------------------------------------------
+    # Create frames
+    # --------------------------------------------------
+
+    snake = []
+
+    start_position = (
+        70,
+        HEIGHT // 2
     )
 
-    for head_index in range(
-        frame_count
+    current_position = start_position
+
+    # Number of body segments the snake gains
+    # after eating each solution
+    GROWTH = 5
+
+    # --------------------------------------------------
+    # Draw a single frame
+    # --------------------------------------------------
+
+    def draw_frame(
+        food,
+        snake_body,
+        head_position,
+        eaten_count
     ):
 
         image = Image.new(
             "RGB",
-            (width, height),
-            "#0d1117"
+            (WIDTH, HEIGHT),
+            BG_COLOR
         )
 
         draw = ImageDraw.Draw(
             image
         )
 
+        # Title
+        draw.text(
+            (40, 20),
+            "🐍 GFG Solution Snake",
+            fill=TEXT_COLOR
+        )
+
+        draw.text(
+            (40, 50),
+            "🟢 = GFG solution",
+            fill=MUTED_COLOR
+        )
+
+        # Game board
         draw.rounded_rectangle(
-            (30, 80, 870, 245),
-            radius=15,
-            fill="#161b22",
-            outline="#30363d"
+            (30, 80, 870, 270),
+            radius=18,
+            fill=BOARD_COLOR,
+            outline=BORDER_COLOR,
+            width=2
         )
 
-        draw.text(
-            (40, 18),
-            "GFG Solution Snake",
-            fill="#f0f6fc"
-        )
+        # ------------------------------------------
+        # Draw remaining food
+        # ------------------------------------------
 
-        draw.text(
-            (40, 45),
-            "Green dots = GFG solutions",
-            fill="#8b949e"
-        )
+        for food_x, food_y in food:
 
-        for x, y in points:
-
-            r = 7
+            r = 8
 
             draw.ellipse(
                 (
-                    x - r,
-                    y - r,
-                    x + r,
-                    y + r
+                    food_x - r,
+                    food_y - r,
+                    food_x + r,
+                    food_y + r
                 ),
-                fill="#22c55e"
+                fill=FOOD_COLOR
             )
 
-        if points:
+            # Small highlight
+            draw.ellipse(
+                (
+                    food_x - 3,
+                    food_y - 5,
+                    food_x,
+                    food_y - 2
+                ),
+                fill="#86efac"
+            )
 
-            start = max(
+        # ------------------------------------------
+        # Draw snake body
+        # ------------------------------------------
+
+        for index, (
+            segment_x,
+            segment_y
+        ) in enumerate(
+            snake_body
+        ):
+
+            radius = max(
+                6,
+                12 - index * 0.35
+            )
+
+            draw.ellipse(
+                (
+                    segment_x - radius,
+                    segment_y - radius,
+                    segment_x + radius,
+                    segment_y + radius
+                ),
+                fill=SNAKE_COLOR
+            )
+
+        # ------------------------------------------
+        # Draw snake head
+        # ------------------------------------------
+
+        head_x, head_y = head_position
+
+        radius = 14
+
+        draw.ellipse(
+            (
+                head_x - radius,
+                head_y - radius,
+                head_x + radius,
+                head_y + radius
+            ),
+            fill=HEAD_COLOR,
+            outline="#d1fae5",
+            width=2
+        )
+
+        # Eyes
+        draw.ellipse(
+            (
+                head_x + 3,
+                head_y - 6,
+                head_x + 6,
+                head_y - 3
+            ),
+            fill=BG_COLOR
+        )
+
+        # ------------------------------------------
+        # Progress
+        # ------------------------------------------
+
+        draw.text(
+            (40, 285),
+            f"Solutions eaten: {eaten_count} / {total}",
+            fill=MUTED_COLOR
+        )
+
+        return image
+
+    # --------------------------------------------------
+    # Initial snake
+    # --------------------------------------------------
+
+    snake = [
+        (
+            start_position[0] - i * 12,
+            start_position[1]
+        )
+        for i in range(4)
+    ]
+
+    # --------------------------------------------------
+    # Animate each solution being eaten
+    # --------------------------------------------------
+
+    remaining_food = list(points)
+
+    for food_index, target in enumerate(points):
+
+        target_x, target_y = target
+
+        start_x, start_y = current_position
+
+        # ------------------------------------------
+        # Calculate movement
+        # ------------------------------------------
+
+        distance = math.sqrt(
+            (target_x - start_x) ** 2
+            + (target_y - start_y) ** 2
+        )
+
+        steps = max(
+            10,
+            int(distance / 12)
+        )
+
+        # ------------------------------------------
+        # Move snake toward food
+        # ------------------------------------------
+
+        for step in range(
+            steps
+        ):
+
+            progress = (
+                step + 1
+            ) / steps
+
+            head_x = (
+                start_x
+                + (target_x - start_x)
+                * progress
+            )
+
+            head_y = (
+                start_y
+                + (target_y - start_y)
+                * progress
+            )
+
+            head = (
+                head_x,
+                head_y
+            )
+
+            # Add new head
+            snake.insert(
                 0,
-                head_index - 10
+                head
             )
 
-            trail = points[
-                start:
-                head_index + 1
+            # Keep current length
+            max_length = (
+                5
+                + (food_index * GROWTH)
+            )
+
+            snake = snake[
+                :max_length
             ]
 
-            for i, (x, y) in enumerate(
-                trail
-            ):
-
-                r = max(
-                    5,
-                    int(12 - i * 0.7)
+            frames.append(
+                draw_frame(
+                    remaining_food,
+                    snake[1:],
+                    head,
+                    food_index
                 )
-
-                draw.ellipse(
-                    (
-                        x - r,
-                        y - r,
-                        x + r,
-                        y + r
-                    ),
-                    fill="#14b8a6"
-                )
-
-            hx, hy = points[
-                head_index
-            ]
-
-            r = 14
-
-            draw.ellipse(
-                (
-                    hx - r,
-                    hy - r,
-                    hx + r,
-                    hy + r
-                ),
-                fill="#2dd4bf",
-                outline="#d1fae5",
-                width=2
             )
 
-            draw.ellipse(
-                (
-                    hx + 2,
-                    hy - 6,
-                    hx + 5,
-                    hy - 3
-                ),
-                fill="#0d1117"
+        # ------------------------------------------
+        # FOOD HAS BEEN EATEN
+        # ------------------------------------------
+
+        if target in remaining_food:
+
+            remaining_food.remove(
+                target
             )
 
-        draw.text(
-            (40, 258),
-            f"Solutions tracked: {total}",
-            fill="#8b949e"
-        )
+        # ------------------------------------------
+        # Eating animation
+        # ------------------------------------------
+
+        for _ in range(4):
+
+            frames.append(
+                draw_frame(
+                    remaining_food,
+                    snake[1:],
+                    snake[0],
+                    food_index + 1
+                )
+            )
+
+        current_position = target
+
+    # --------------------------------------------------
+    # Hold final frame
+    # --------------------------------------------------
+
+    final_frame = draw_frame(
+        remaining_food,
+        snake[1:],
+        snake[0],
+        total
+    )
+
+    for _ in range(12):
 
         frames.append(
-            image
+            final_frame.copy()
         )
 
+    # --------------------------------------------------
+    # Save GIF
+    # --------------------------------------------------
+
     frames[0].save(
-        ASSETS
-        / "gfg-solution-snake.gif",
+        ASSETS / "gfg-solution-snake.gif",
         save_all=True,
         append_images=frames[1:],
-        duration=100,
-        loop=0
+        duration=70,
+        loop=0,
+        disposal=2
     )
-
-
-def main():
-
-    stats = scan_problems()
-
-    print(
-        "GFG Statistics:",
-        stats
-    )
-
-    update_readme(
-        stats
-    )
-
-    write_svg(
-        stats["total"]
-    )
-
-    write_gif(
-        stats["total"]
-    )
-
-
-if __name__ == "__main__":
-
-    main()
