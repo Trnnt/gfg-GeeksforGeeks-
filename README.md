@@ -53,6 +53,8 @@ I use this repository to track my problem-solving journey, improve my coding ski
 
 ## 🎮 DSA Quest
 
+<!-- DSA_QUEST_START -->
+
 ```text
 ╔══════════════════════════════════════╗
 ║          🏆 DSA QUEST                ║
@@ -62,13 +64,15 @@ I use this repository to track my problem-solving journey, improve my coding ski
 ║  🟡 Medium     ▱▱▱▱▱▱▱▱▱▱   0%      ║
 ║  🔴 Hard       ▱▱▱▱▱▱▱▱▱▱   0%      ║
 ║                                      ║
-║  ⚔️ Problems Solved: 0               ║
+║  ⚔️ Problems Solved: 0              ║
 ║  ⭐ Current Level: Beginner          ║
 ║                                      ║
 ║  🎯 Next Level: Solve 10 Problems   ║
 ║                                      ║
 ╚══════════════════════════════════════╝
+```
 
+<!-- DSA_QUEST_END -->
 
 ---
 
@@ -88,3 +92,27 @@ I use this repository to track my problem-solving journey, improve my coding ski
     src="https://raw.githubusercontent.com/Trnnt/gfg-GeeksforGeeks-/output/github-snake.svg"
   />
 </picture>
+
+---
+
+## 🎯 Goal
+
+Build strong **problem-solving and DSA skills** through consistent practice.
+
+My goal is to solve problems regularly, understand different patterns, and become confident in technical interviews.
+
+> 💡 One problem at a time. One concept at a time. One step closer to becoming a better developer.
+
+---
+
+## 🔗 Profiles
+
+- [GeeksforGeeks](https://www.geeksforgeeks.org/)
+- [GitHub](https://github.com/Trnnt)
+- [LeetCode](https://leetcode.com/u/Nishant-kujmar5220/)
+
+---
+
+⭐ If this repository helps you, feel free to explore the solutions!
+
+**Happy Coding! 🚀**
