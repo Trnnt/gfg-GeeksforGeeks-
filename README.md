@@ -68,3 +68,23 @@ I use this repository to track my problem-solving journey, improve my coding ski
 ║  🎯 Next Level: Solve 10 Problems   ║
 ║                                      ║
 ╚══════════════════════════════════════╝
+
+
+---
+
+## 🐍 Contribution Snake
+
+<picture>
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://raw.githubusercontent.com/Trnnt/gfg-GeeksforGeeks-/output/github-snake-dark.svg"
+  />
+  <source
+    media="(prefers-color-scheme: light)"
+    srcset="https://raw.githubusercontent.com/Trnnt/gfg-GeeksforGeeks-/output/github-snake.svg"
+  />
+  <img
+    alt="GitHub Contribution Snake"
+    src="https://raw.githubusercontent.com/Trnnt/gfg-GeeksforGeeks-/output/github-snake.svg"
+  />
+</picture>
